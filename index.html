@@ -286,8 +286,9 @@
             appState.inventory.forEach(item => {
                 if(!item.code) return;
                 if(!grouped[item.code]) { grouped[item.code] = { code: item.code, name: item.name, danger: item.danger, unit: item.unit, total: 0, batches: [] }; }
-                // Parse correctly using the backend's new raw numbers
-                grouped[item.code].total += Number(item.total); 
+                
+                // Safely parse numbers (Strips commas if they exist)
+                grouped[item.code].total += Number(String(item.total).replace(/,/g, '')) || 0; 
                 grouped[item.code].batches.push(item);
             });
 
@@ -338,10 +339,11 @@
 
             appState.inventory.forEach(item => {
                 if(!item.expiry) return;
-                // Backend now sends strict YYYY-MM-DD
+                // Parse strict YYYY-MM-DD from backend
                 const expParts = item.expiry.split('-'); 
-                const expDate = new Date(expParts[0], expParts[1] - 1, expParts[2]);
+                if (expParts.length !== 3) return;
                 
+                const expDate = new Date(expParts[0], expParts[1] - 1, expParts[2]);
                 const daysLeft = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
                 if (daysLeft > 90) return; 
 
@@ -357,7 +359,7 @@
                     <div style="font-weight:bold; color:${alertColor}; font-size:12px; margin-bottom:4px;">${alertText}</div>
                     <div class="card-title" style="font-size:16px;">${item.name} (${item.code})</div>
                     <div style="font-size:12px; color:var(--text-gray); margin-top:4px;">Loc: ${item.location} • ${item.closet} • ${item.shelf}</div>
-                    <div style="font-size:12px; margin-top:4px;">Qty: ${item.total} ${item.unit} | Exp: ${item.expiry}</div>
+                    <div style="font-size:12px; margin-top:4px;">Qty: ${Number(String(item.total).replace(/,/g, '')).toLocaleString()} ${item.unit} | Exp: ${item.expiry}</div>
                 `;
                 list.appendChild(card);
             });
@@ -369,14 +371,20 @@
             const content = document.getElementById('profile-content');
             let tableHTML = `<table><tr><th>Location</th><th>Qty</th><th>Exp</th><th></th></tr>`;
             
-            // Render specific location batches WITH A LOG BUTTON for each to pre-fill source correctly
             groupedData.batches.forEach(b => {
                 const exp = b.expiry ? b.expiry : "-";
+                const safeTotal = Number(String(b.total).replace(/,/g, '')).toLocaleString();
+                
+                // Escape strings to prevent HTML breakage
+                const safeLoc = b.location.replace(/'/g, "\\'");
+                const safeClo = b.closet.replace(/'/g, "\\'");
+                const safeShl = b.shelf.replace(/'/g, "\\'");
+
                 tableHTML += `<tr>
                     <td><div style="font-weight:bold;font-size:12px;">${b.location}</div><div style="font-size:10px;color:#888;">${b.closet} • ${b.shelf}</div></td>
-                    <td>${Number(b.total).toLocaleString()}</td>
+                    <td>${safeTotal}</td>
                     <td>${exp}</td>
-                    <td><button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="prefillItemForm('${b.code}', '${b.location}', '${b.closet}', '${b.shelf}')">Log</button></td>
+                    <td><button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="prefillItemForm('${b.code}', '${safeLoc}', '${safeClo}', '${safeShl}')">Log</button></td>
                 </tr>`;
             });
             tableHTML += `</table>`;
@@ -397,6 +405,8 @@
 
         function openEqProfile(eq) {
             const content = document.getElementById('profile-content');
+            const safeLoc = eq.location.replace(/'/g, "\\'");
+
             content.innerHTML = `
                 <h2>${eq.name}</h2>
                 <p class="card-code">${eq.code}</p>
@@ -406,7 +416,7 @@
                 </div>
                 <p style="margin-top:12px;"><b>Location:</b> ${eq.location}</p>
                 <p><b>Next Maintenance:</b> ${eq.nextMaint || "Not Set"}</p>
-                <button class="btn btn-primary" style="margin-top:24px;" onclick="prefillEqForm('${eq.code}', '${eq.location}')">Update Equipment</button>
+                <button class="btn btn-primary" style="margin-top:24px;" onclick="prefillEqForm('${eq.code}', '${safeLoc}')">Update Equipment</button>
             `;
             document.getElementById('profile-modal').classList.remove('hidden');
         }
@@ -417,31 +427,42 @@
             document.getElementById('log-modal').classList.remove('hidden');
         }
 
-        // AUTO-PREFILL FUNCTIONS
+        // ==========================================
+        // FIXED PRE-FILL FUNCTIONS
+        // ==========================================
         function prefillItemForm(code, lab, clo, shl) {
             closeModal('profile-modal');
+            document.getElementById('log-form').reset(); // Reset FIRST
+            
             setLogType('Item');
             document.getElementById('item-code').value = code;
+            
             if (lab && clo && shl) {
-                document.getElementById('item-action').value = "Consume"; // Assume consume by default if selecting a batch
+                document.getElementById('item-action').value = "Consume"; 
+                handleActionLogic(); 
                 document.getElementById('s-lab').value = lab;
                 document.getElementById('s-clo').value = clo;
                 document.getElementById('s-shl').value = shl;
             } else {
                 document.getElementById('item-action').value = "Initial Stock";
+                handleActionLogic(); 
             }
-            handleActionLogic();
-            openLogModal();
+            
+            document.getElementById('log-modal').classList.remove('hidden');
         }
 
         function prefillEqForm(code, lab) {
             closeModal('profile-modal');
+            document.getElementById('log-form').reset(); // Reset FIRST
+            
             setLogType('Equipment');
             document.getElementById('eq-code').value = code;
             document.getElementById('eq-action').value = "Status Update";
+            
+            handleActionLogic(); 
             document.getElementById('eq-lab').value = lab;
-            handleActionLogic();
-            openLogModal();
+            
+            document.getElementById('log-modal').classList.remove('hidden');
         }
 
         function setLogType(type) {
