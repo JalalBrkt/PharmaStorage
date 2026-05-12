@@ -3,148 +3,604 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>LabFlow v2.0</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="styles.css">
+    <title>LabFlow v5.2</title>
+    <style>
+        /* =========================================================
+           CSS DESIGN SYSTEM (Mobile-First)
+           ========================================================= */
+        :root {
+            --primary: #0B132B;
+            --secondary: #4a86e8;
+            --bg: #F7F8FA;
+            --card-bg: #FFFFFF;
+            --text-dark: #1A1A1A;
+            --text-gray: #8D99AE;
+            --mild: #b6d7a8;
+            --medium: #f9cb9c;
+            --high: #ea9999;
+            --danger-text: #D93025;
+            --border: #E2E8F0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background-color: var(--bg); color: var(--text-dark); -webkit-font-smoothing: antialiased; padding-bottom: 80px; }
+        
+        .hidden { display: none !important; }
+        
+        /* --- Typography & Buttons --- */
+        h1, h2, h3 { color: var(--primary); }
+        .btn { display: inline-block; width: 100%; padding: 14px; border-radius: 50px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; transition: 0.2s; }
+        .btn-primary { background-color: var(--secondary); color: white; }
+        .btn-outline { background-color: transparent; border: 2px solid var(--border); color: var(--text-dark); }
+        
+        /* --- Inputs & Forms --- */
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; margin-top: 4px; margin-bottom: 12px; background: white;}
+        label { font-size: 14px; font-weight: 600; color: var(--text-gray); }
+
+        /* --- Badges --- */
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; }
+        .b-mild, .b-operational { background: var(--mild); color: #004d00; }
+        .b-medium, .b-maintenance { background: var(--medium); color: #804000; }
+        .b-high, .b-repair { background: var(--high); color: #660000; }
+        .b-decom { background: #cccccc; color: #333; }
+
+        /* --- Layout & Cards --- */
+        .header { background: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10; }
+        .tabs { display: flex; background: white; border-bottom: 1px solid var(--border); position: sticky; top: 60px; z-index: 9;}
+        .tab { flex: 1; text-align: center; padding: 12px; font-weight: bold; color: var(--text-gray); cursor: pointer; border-bottom: 3px solid transparent; }
+        .tab.active { color: var(--secondary); border-bottom-color: var(--secondary); }
+        
+        .container { padding: 16px; }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid var(--border); cursor: pointer; }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        .card-title { font-size: 18px; font-weight: bold; }
+        .card-code { font-size: 12px; color: var(--text-gray); }
+        .card-qty { font-size: 24px; font-weight: bold; color: var(--secondary); margin-top: 8px;}
+
+        /* --- Floating Action Button --- */
+        .fab { position: fixed; bottom: 24px; right: 24px; width: 60px; height: 60px; background-color: var(--primary); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; z-index: 100; border: none;}
+
+        /* --- Modals --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: flex-end; z-index: 200; }
+        .modal-content { background: white; width: 100%; max-height: 90vh; border-radius: 20px 20px 0 0; padding: 24px; overflow-y: auto; position: relative; animation: slideUp 0.3s ease-out;}
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .close-btn { position: absolute; top: 16px; right: 24px; font-size: 24px; background: none; border: none; color: var(--text-gray); cursor: pointer; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
+        th { color: var(--text-gray); }
+
+        /* --- Global Loader --- */
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { border: 4px solid var(--border); border-top: 4px solid var(--secondary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px;}
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
 <body>
 
-    <div id="login-screen" class="screen active">
-        <div class="login-card">
-            <div class="logo-box"><i class="ph ph-flask"></i></div>
-            <h1>LabFlow v2.0</h1>
-            <p>Enter your 4-digit PIN to access the system.</p>
-            <form id="login-form">
-                <input type="password" id="pin-input" placeholder="Enter PIN" maxlength="4" inputmode="numeric" required>
-                <button type="submit" id="login-btn">Login</button>
-            </form>
-            <div id="login-error" class="error-msg hidden">Invalid PIN. Try again.</div>
+    <!-- GLOBAL LOADER -->
+    <div id="loader" class="hidden">
+        <div class="spinner"></div>
+        <p style="font-weight: bold; color: var(--primary);" id="loader-text">Loading...</p>
+    </div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="container" style="height: 100vh; display: flex; flex-direction: column; justify-content: center;">
+        <h1 style="text-align: center; margin-bottom: 8px; font-size: 32px;">LabFlow</h1>
+        <p style="text-align: center; color: var(--text-gray); margin-bottom: 32px;">Inventory & Asset Management</p>
+        <label>Staff Password</label>
+        <input type="password" id="login-password" placeholder="Enter your password">
+        <button class="btn btn-primary" onclick="login()">Access System</button>
+    </div>
+
+    <!-- MAIN APP SCREEN -->
+    <div id="app-screen" class="hidden">
+        <div class="header">
+            <h2>LabFlow</h2>
+            <div style="text-align: right;">
+                <div style="font-size: 14px; font-weight: bold;" id="user-name">User Name</div>
+                <div style="font-size: 12px; color: var(--text-gray); cursor: pointer;" onclick="logout()">Logout</div>
+            </div>
         </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('inventory')">Inventory</div>
+            <div class="tab" onclick="switchTab('equipment')">Equipment</div>
+            <div class="tab" onclick="switchTab('alerts')">Alerts</div>
+        </div>
+
+        <!-- INVENTORY TAB -->
+        <div id="tab-inventory" class="container">
+            <input type="text" id="search-inventory" placeholder="🔍 Search Items..." onkeyup="renderInventory()">
+            <div id="inventory-list"></div>
+        </div>
+
+        <!-- EQUIPMENT TAB -->
+        <div id="tab-equipment" class="container hidden">
+            <input type="text" id="search-equipment" placeholder="🔍 Search Equipment..." onkeyup="renderEquipment()">
+            <div id="equipment-list"></div>
+        </div>
+
+        <!-- ALERTS TAB -->
+        <div id="tab-alerts" class="container hidden">
+            <div id="alerts-list"></div>
+        </div>
+
+        <!-- FLOATING ACTION BUTTON (FAB) -->
+        <button class="fab" onclick="openLogModal()">+</button>
     </div>
 
-    <div id="app-screen" class="screen hidden">
-        
-        <header class="app-header">
-            <div class="header-left">
-                <div class="logo-box-small"><i class="ph ph-flask"></i></div>
-                <div class="user-info">
-                    <h2>LabFlow v2.0</h2>
-                    <p><span class="status-dot"></span> <span id="display-user-name">USER</span> • <span id="display-user-role">ROLE</span></p>
-                </div>
-            </div>
-            <div class="header-right">
-                <button onclick="fetchData()" class="icon-btn"><i class="ph ph-arrows-clockwise"></i></button>
-                <button onclick="logout()" class="icon-btn"><i class="ph ph-sign-out"></i></button>
-            </div>
-        </header>
-
-        <nav id="main-nav" class="tabs">
-            <button class="tab active" onclick="switchTab('inventory')"><i class="ph ph-squares-four"></i> INVENTORY</button>
-            <button class="tab" onclick="switchTab('equipment')"><i class="ph ph-archive"></i> EQUIPMENT</button>
-            <button class="tab" onclick="switchTab('alerts')"><i class="ph ph-calendar-warning"></i> ALERTS</button>
-        </nav>
-
-        <main class="content">
-            
-            <section id="tab-inventory" class="tab-content active">
-                <div class="section-header">
-                    <h1>Dashboard</h1>
-                    <p>ACTIVE STOCK LEDGER</p>
-                </div>
-                <div class="search-bar">
-                    <i class="ph ph-magnifying-glass"></i>
-                    <input type="text" id="search-input" placeholder="Search items..." oninput="filterInventory()">
-                </div>
-                <div id="inventory-list" class="card-list">
-                    </div>
-                <button class="fab" onclick="openModal()"><i class="ph ph-plus"></i></button>
-            </section>
-
-            <section id="tab-equipment" class="tab-content hidden">
-                <div class="section-header">
-                    <h1>Equipment</h1>
-                    <p>ASSET MAINTENANCE TRACKER</p>
-                </div>
-                <div id="equipment-list" class="card-list">
-                    </div>
-            </section>
-
-            <section id="tab-alerts" class="tab-content hidden">
-                <div class="section-header">
-                    <h1>Risk Alerts</h1>
-                    <p>CRITICAL EXPIRY MANAGEMENT</p>
-                </div>
-                <div id="alerts-list" class="card-list">
-                    </div>
-            </section>
-
-            <section id="tab-tech-only" class="tab-content hidden">
-                <div class="section-header">
-                    <h1>Log Movement</h1>
-                    <p>REGISTER STOCK CHANGES</p>
-                </div>
-                <div class="tech-prompt">
-                    <p>You are logged in as a Technician. You may only log stock movements.</p>
-                    <button class="primary-btn" onclick="openModal()">Log New Movement</button>
-                </div>
-            </section>
-
-        </main>
-    </div>
-
-    <div id="log-modal" class="modal hidden">
+    <!-- MATERIAL PROFILE MODAL -->
+    <div id="profile-modal" class="modal-overlay hidden">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>Log Action</h3>
-                <button class="close-btn" onclick="closeModal()"><i class="ph ph-x"></i></button>
+            <button class="close-btn" onclick="closeModal('profile-modal')">×</button>
+            <div id="profile-content"></div>
+        </div>
+    </div>
+
+    <!-- SUBMIT LOG MODAL (THE FORM) -->
+    <div id="log-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal('log-modal')">×</button>
+            <h2 style="margin-bottom: 16px;">Log New Movement</h2>
+            
+            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                <button class="btn btn-outline" id="toggle-item" onclick="setLogType('Item')" style="flex:1; border-color: var(--secondary); color: var(--secondary);">Item</button>
+                <button class="btn btn-outline" id="toggle-eq" onclick="setLogType('Equipment')" style="flex:1;">Equipment</button>
             </div>
-            <form id="log-form">
-                <div class="form-group">
-                    <label>Action Type</label>
-                    <select id="log-action" required>
-                        <option value="In">In (Add Stock)</option>
-                        <option value="Out">Out (Consume)</option>
-                        <option value="Transfer">Transfer (Move)</option>
+
+            <form id="log-form" onsubmit="submitLog(event)">
+                <div id="form-item-section">
+                    <label>Action</label>
+                    <select id="item-action" required onchange="handleActionLogic()">
+                        <option value="">Select Action...</option>
                         <option value="Initial Stock">Initial Stock</option>
+                        <option value="Transfer">Transfer</option>
+                        <option value="Consume">Consume</option>
                     </select>
-                </div>
-                <div class="form-group">
+
                     <label>Item Code</label>
-                    <input type="text" id="log-item" placeholder="e.g. DQC-001" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Amount</label>
-                        <input type="number" id="log-amount" step="0.01" required>
+                    <input type="text" id="item-code" required placeholder="e.g., SOL-001">
+
+                    <div style="display: flex; gap: 8px;">
+                        <div style="flex: 2;">
+                            <label>Amount</label>
+                            <input type="number" id="item-amount" step="0.01">
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Unit</label>
+                            <select id="item-unit">
+                                <option value="mL">mL</option><option value="L">L</option>
+                                <option value="mg">mg</option><option value="g">g</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Unit</label>
-                        <select id="log-unit" required>
-                            <option value="mL">mL</option>
-                            <option value="mg">mg</option>
-                            <option value="g">g</option>
-                            <option value="L">L</option>
-                        </select>
+
+                    <!-- SOURCE LOCATIONS -->
+                    <div id="source-section">
+                        <label style="color:var(--primary);">Source Location</label>
+                        <div style="display: flex; gap: 4px;">
+                            <select id="s-lab"><option value="">Lab...</option></select>
+                            <select id="s-clo"><option value="">Closet...</option></select>
+                            <select id="s-shl"><option value="">Shelf...</option></select>
+                        </div>
+                    </div>
+
+                    <!-- DEST LOCATIONS -->
+                    <div id="dest-section">
+                        <label style="color:var(--secondary);">Destination Location</label>
+                        <div style="display: flex; gap: 4px;">
+                            <select id="d-lab"><option value="">Lab...</option></select>
+                            <select id="d-clo"><option value="">Closet...</option></select>
+                            <select id="d-shl"><option value="">Shelf...</option></select>
+                        </div>
+                    </div>
+
+                    <div id="expiry-section">
+                        <label>Expiration Date</label>
+                        <input type="date" id="item-expiry">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Destination (Lab • Closet)</label>
-                    <input type="text" id="log-dest" placeholder="e.g. Lab 1 • Closet 2" required>
+
+                <div id="form-eq-section" class="hidden">
+                    <label>Action</label>
+                    <select id="eq-action" onchange="handleActionLogic()">
+                        <option value="">Select Action...</option>
+                        <option value="Transfer">Transfer</option>
+                        <option value="Maintenance">Maintenance</option>
+                        <option value="Status Update">Status Update</option>
+                    </select>
+
+                    <label>Equipment Code</label>
+                    <input type="text" id="eq-code" placeholder="e.g., EQ-001">
+
+                    <label>Current / Dest Lab</label>
+                    <select id="eq-lab"><option value="">Select Lab...</option></select>
+
+                    <label>New Status</label>
+                    <select id="eq-status">
+                        <option value="Operational">Operational</option>
+                        <option value="Needs Repair">Needs Repair</option>
+                        <option value="Under Maintenance">Under Maintenance</option>
+                        <option value="Decommissioned">Decommissioned</option>
+                    </select>
+
+                    <label>Next Maintenance Date</label>
+                    <input type="date" id="eq-maint">
                 </div>
-                <div class="form-group" id="source-group" class="hidden">
-                    <label>Source (Lab • Closet) - For Out/Transfer</label>
-                    <input type="text" id="log-source" placeholder="e.g. Lab 2 • Closet 1">
-                </div>
-                <div class="form-group">
-                    <label>Expiry Date (For new stock)</label>
-                    <input type="date" id="log-exp">
-                </div>
-                <button type="submit" id="submit-log-btn" class="primary-btn full-width">Submit Log</button>
+
+                <button type="submit" class="btn btn-primary" style="margin-top: 16px;">Submit Log</button>
             </form>
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <!-- =========================================================
+         JAVASCRIPT LOGIC
+         ========================================================= -->
+    <script>
+        // 1. API CONFIGURATION
+        const API_URL = "https://script.google.com/macros/s/AKfycby5slhOepsc1upQb6KDYFRmJdJMpy2m5xlaAOPKa7ggfYLQ2eODayQ74xRoNqp11HvX/exec";
+        
+        // Global State
+        let appState = {
+            user: null,
+            inventory: [],
+            equipment: [],
+            currentLogType: 'Item'
+        };
+
+        // On Load Check
+        window.onload = () => {
+            const savedUser = localStorage.getItem('labflow_user');
+            if (savedUser) {
+                appState.user = JSON.parse(savedUser);
+                document.getElementById('user-name').innerText = appState.user.name + " (" + appState.user.role + ")";
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                populateLocationDropdowns();
+                fetchData();
+            }
+        };
+
+        // 2. CORE API HELPER
+        // We use text/plain body to avoid CORS preflight issues with Google Apps Script
+        async function apiCall(action, payload) {
+            showLoader("Connecting...");
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: action, payload: payload })
+                });
+                const result = await response.json();
+                hideLoader();
+                if (result.status === "error") throw new Error(result.message);
+                return result.data;
+            } catch (error) {
+                hideLoader();
+                alert("Error: " + error.message);
+                throw error;
+            }
+        }
+
+        function showLoader(text) { document.getElementById('loader-text').innerText = text; document.getElementById('loader').classList.remove('hidden'); }
+        function hideLoader() { document.getElementById('loader').classList.add('hidden'); }
+
+        // 3. AUTHENTICATION
+        async function login() {
+            const pwd = document.getElementById('login-password').value;
+            if(!pwd) return alert("Enter password");
+            try {
+                const data = await apiCall("login", { password: pwd });
+                appState.user = data.user;
+                localStorage.setItem('labflow_user', JSON.stringify(appState.user));
+                document.getElementById('user-name').innerText = appState.user.name + " (" + appState.user.role + ")";
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-screen').classList.remove('hidden');
+                populateLocationDropdowns();
+                fetchData();
+            } catch (e) {} // Error handled in apiCall
+        }
+
+        function logout() {
+            localStorage.removeItem('labflow_user');
+            location.reload();
+        }
+
+        // 4. FETCH AND RENDER DATA
+        async function fetchData() {
+            try {
+                const data = await apiCall("get_data", {});
+                appState.inventory = data.inventory;
+                appState.equipment = data.equipment;
+                renderInventory();
+                renderEquipment();
+                renderAlerts();
+            } catch (e) {}
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('#app-screen .container').forEach(c => c.classList.add('hidden'));
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+        }
+
+        function getDangerClass(grade) {
+            if(grade === "Mild") return "b-mild";
+            if(grade === "Medium") return "b-medium";
+            return "b-high";
+        }
+        function getStatusClass(status) {
+            if(status === "Operational") return "b-operational";
+            if(status === "Needs Repair") return "b-repair";
+            if(status === "Under Maintenance") return "b-maintenance";
+            return "b-decom";
+        }
+
+        // INVENTORY (Groups flat array by Item Code)
+        function renderInventory() {
+            const query = document.getElementById('search-inventory').value.toLowerCase();
+            const list = document.getElementById('inventory-list');
+            list.innerHTML = '';
+
+            // Grouping logic
+            const grouped = {};
+            appState.inventory.forEach(item => {
+                if(!item.code) return;
+                if(!grouped[item.code]) {
+                    grouped[item.code] = { code: item.code, name: item.name, danger: item.danger, unit: item.unit, total: 0, batches: [] };
+                }
+                grouped[item.code].total += Number(item.total);
+                grouped[item.code].batches.push(item);
+            });
+
+            // Rendering
+            Object.values(grouped).forEach(item => {
+                if (query && !item.name.toLowerCase().includes(query) && !item.code.toLowerCase().includes(query)) return;
+                
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => openMaterialProfile(item.code, item);
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${item.name}</div>
+                            <div class="card-code">${item.code}</div>
+                        </div>
+                        <span class="badge ${getDangerClass(item.danger)}">${item.danger}</span>
+                    </div>
+                    <div class="card-qty">${item.total.toLocaleString()} <span style="font-size:14px; color:var(--text-gray);">${item.unit}</span></div>
+                    <div style="font-size:12px; color:var(--text-gray); margin-top:8px;">Stored in ${item.batches.length} location(s)</div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // EQUIPMENT (Flat list)
+        function renderEquipment() {
+            const query = document.getElementById('search-equipment').value.toLowerCase();
+            const list = document.getElementById('equipment-list');
+            list.innerHTML = '';
+
+            appState.equipment.forEach(eq => {
+                if(!eq.code) return;
+                if (query && !eq.name.toLowerCase().includes(query) && !eq.code.toLowerCase().includes(query)) return;
+
+                const maintDate = eq.nextMaint ? new Date(eq.nextMaint).toLocaleDateString() : "Not Set";
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => openEqProfile(eq);
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${eq.name}</div>
+                            <div class="card-code">${eq.code} • ${eq.location}</div>
+                        </div>
+                        <span class="badge ${getStatusClass(eq.status)}">${eq.status}</span>
+                    </div>
+                    <div style="font-size:12px; margin-top:8px;">Maint Due: <b>${maintDate}</b></div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // ALERTS (Calculates Expired/Soon)
+        function renderAlerts() {
+            const list = document.getElementById('alerts-list');
+            list.innerHTML = '';
+            
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            appState.inventory.forEach(item => {
+                if(!item.expiry) return;
+                const expDate = new Date(item.expiry);
+                expDate.setHours(0,0,0,0);
+                
+                const daysLeft = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+                if (daysLeft > 90) return; // Fine
+
+                let alertColor = "", alertText = "";
+                if(daysLeft < 0) { alertColor = "var(--danger-text)"; alertText = "EXPIRED"; }
+                else if (daysLeft <= 30) { alertColor = "#E67C00"; alertText = `Critical: ${daysLeft} Days`; }
+                else { alertColor = "#F2A900"; alertText = `Warning: ${daysLeft} Days`; }
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.borderLeft = `4px solid ${alertColor}`;
+                card.onclick = () => { switchTab('inventory'); document.getElementById('search-inventory').value = item.code; renderInventory(); };
+                card.innerHTML = `
+                    <div style="font-weight:bold; color:${alertColor}; font-size:12px; margin-bottom:4px;">${alertText}</div>
+                    <div class="card-title" style="font-size:16px;">${item.name} (${item.code})</div>
+                    <div style="font-size:12px; color:var(--text-gray); margin-top:4px;">Loc: ${item.location} • ${item.closet} • ${item.shelf}</div>
+                    <div style="font-size:12px; margin-top:4px;">Qty: ${item.total} ${item.unit} | Exp: ${expDate.toLocaleDateString()}</div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // 5. MODALS & PROFILES
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        
+        function openMaterialProfile(code, groupedData) {
+            const content = document.getElementById('profile-content');
+            
+            let tableHTML = `<table><tr><th>Lab</th><th>Closet</th><th>Shelf</th><th>Qty</th><th>Expiry</th></tr>`;
+            groupedData.batches.forEach(b => {
+                const exp = b.expiry ? new Date(b.expiry).toLocaleDateString() : "-";
+                tableHTML += `<tr><td>${b.location}</td><td>${b.closet}</td><td>${b.shelf}</td><td>${Number(b.total).toLocaleString()}</td><td>${exp}</td></tr>`;
+            });
+            tableHTML += `</table>`;
+
+            content.innerHTML = `
+                <h2>${groupedData.name}</h2>
+                <p class="card-code">${groupedData.code}</p>
+                <div style="margin: 16px 0;">
+                    <span class="badge ${getDangerClass(groupedData.danger)}">${groupedData.danger}</span>
+                    <button class="btn btn-outline" style="width: auto; padding: 4px 12px; margin-left: 8px;">MSDS</button>
+                </div>
+                <h3 style="font-size: 14px; margin-top: 16px; border-bottom:1px solid #eee; padding-bottom:4px;">Location Breakdown</h3>
+                ${tableHTML}
+                <button class="btn btn-primary" style="margin-top:24px;" onclick="prefillForm('Item', '${groupedData.code}')">Log Movement</button>
+            `;
+            document.getElementById('profile-modal').classList.remove('hidden');
+        }
+
+        function openEqProfile(eq) {
+            const maintDate = eq.nextMaint ? new Date(eq.nextMaint).toLocaleDateString() : "Not Set";
+            const content = document.getElementById('profile-content');
+            content.innerHTML = `
+                <h2>${eq.name}</h2>
+                <p class="card-code">${eq.code}</p>
+                <div style="margin: 16px 0;">
+                    <span class="badge ${getStatusClass(eq.status)}">${eq.status}</span>
+                    <button class="btn btn-outline" style="width: auto; padding: 4px 12px; margin-left: 8px;">Instructions</button>
+                </div>
+                <p style="margin-top:12px;"><b>Location:</b> ${eq.location}</p>
+                <p><b>Next Maintenance:</b> ${maintDate}</p>
+                <button class="btn btn-primary" style="margin-top:24px;" onclick="prefillForm('Equipment', '${eq.code}')">Update Equipment</button>
+            `;
+            document.getElementById('profile-modal').classList.remove('hidden');
+        }
+
+        // 6. FORM & SUBMISSION LOGIC
+        function openLogModal() {
+            document.getElementById('log-form').reset();
+            handleActionLogic(); // hide/show logic
+            document.getElementById('log-modal').classList.remove('hidden');
+        }
+
+        function prefillForm(type, code) {
+            closeModal('profile-modal');
+            setLogType(type);
+            document.getElementById(type === 'Item' ? 'item-code' : 'eq-code').value = code;
+            openLogModal();
+        }
+
+        function setLogType(type) {
+            appState.currentLogType = type;
+            document.getElementById('toggle-item').style = type === 'Item' ? "flex:1; border-color:var(--secondary); color:var(--secondary);" : "flex:1;";
+            document.getElementById('toggle-eq').style = type === 'Equipment' ? "flex:1; border-color:var(--secondary); color:var(--secondary);" : "flex:1;";
+            
+            if(type === 'Item') {
+                document.getElementById('form-item-section').classList.remove('hidden');
+                document.getElementById('form-eq-section').classList.add('hidden');
+                document.getElementById('item-action').required = true;
+                document.getElementById('eq-action').required = false;
+            } else {
+                document.getElementById('form-item-section').classList.add('hidden');
+                document.getElementById('form-eq-section').classList.remove('hidden');
+                document.getElementById('item-action').required = false;
+                document.getElementById('eq-action').required = true;
+            }
+            handleActionLogic();
+        }
+
+        // Dynamically shows/hides columns based on the Action chosen
+        function handleActionLogic() {
+            if(appState.currentLogType === 'Item') {
+                const action = document.getElementById('item-action').value;
+                const src = document.getElementById('source-section');
+                const dst = document.getElementById('dest-section');
+                const exp = document.getElementById('expiry-section');
+                
+                src.classList.add('hidden'); dst.classList.add('hidden'); exp.classList.add('hidden');
+                // Remove required flags
+                ['s-lab','s-clo','s-shl','d-lab','d-clo','d-shl'].forEach(id => document.getElementById(id).required = false);
+
+                if(action === "Initial Stock") {
+                    dst.classList.remove('hidden'); exp.classList.remove('hidden');
+                    ['d-lab','d-clo','d-shl'].forEach(id => document.getElementById(id).required = true);
+                } else if (action === "Transfer") {
+                    src.classList.remove('hidden'); dst.classList.remove('hidden');
+                    ['s-lab','s-clo','s-shl','d-lab','d-clo','d-shl'].forEach(id => document.getElementById(id).required = true);
+                } else if (action === "Consume") {
+                    src.classList.remove('hidden');
+                    ['s-lab','s-clo','s-shl'].forEach(id => document.getElementById(id).required = true);
+                }
+            }
+        }
+
+        async function submitLog(e) {
+            e.preventDefault();
+            
+            let payload = {};
+            if(appState.currentLogType === 'Item') {
+                payload = {
+                    category: "Item",
+                    action: document.getElementById('item-action').value,
+                    code: document.getElementById('item-code').value.toUpperCase(),
+                    amount: document.getElementById('item-amount').value,
+                    unit: document.getElementById('item-unit').value,
+                    sourceLab: document.getElementById('s-lab').value,
+                    sourceCloset: document.getElementById('s-clo').value,
+                    sourceShelf: document.getElementById('s-shl').value,
+                    destLab: document.getElementById('d-lab').value,
+                    destCloset: document.getElementById('d-clo').value,
+                    destShelf: document.getElementById('d-shl').value,
+                    expiry: document.getElementById('item-expiry').value,
+                    techName: appState.user.name,
+                    notes: ""
+                };
+            } else {
+                payload = {
+                    category: "Equipment",
+                    action: document.getElementById('eq-action').value,
+                    code: document.getElementById('eq-code').value.toUpperCase(),
+                    destLoc: document.getElementById('eq-lab').value,
+                    eqStatus: document.getElementById('eq-status').value,
+                    nextMaint: document.getElementById('eq-maint').value,
+                    techName: appState.user.name,
+                    notes: ""
+                };
+            }
+
+            try {
+                await apiCall("submit_log", payload);
+                alert("Log submitted successfully!");
+                closeModal('log-modal');
+                fetchData(); // Refresh dashboards
+            } catch(e) {}
+        }
+
+        // Utilities: Populate the location dropdowns (Lab 1-33, etc.)
+        function populateLocationDropdowns() {
+            let labs = "<option value=''>Select...</option>";
+            for(let i=1; i<=33; i++) labs += `<option value='Lab ${i}'>Lab ${i}</option>`;
+            let closets = "<option value=''>Select...</option>";
+            for(let i=1; i<=10; i++) closets += `<option value='Closet ${i}'>Closet ${i}</option>`;
+            let shelves = "<option value=''>Select...</option>";
+            for(let i=1; i<=5; i++) shelves += `<option value='Shelf ${i}'>Shelf ${i}</option>`;
+
+            document.getElementById('s-lab').innerHTML = labs;
+            document.getElementById('d-lab').innerHTML = labs;
+            document.getElementById('eq-lab').innerHTML = labs;
+            document.getElementById('s-clo').innerHTML = closets;
+            document.getElementById('d-clo').innerHTML = closets;
+            document.getElementById('s-shl').innerHTML = shelves;
+            document.getElementById('d-shl').innerHTML = shelves;
+        }
+    </script>
 </body>
 </html>
