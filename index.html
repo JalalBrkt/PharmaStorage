@@ -6,71 +6,45 @@
     <title>LabFlow v5.2</title>
     <style>
         /* =========================================================
-           CSS DESIGN SYSTEM (Mobile-First)
+           CSS DESIGN SYSTEM
            ========================================================= */
         :root {
-            --primary: #0B132B;
-            --secondary: #4a86e8;
-            --bg: #F7F8FA;
-            --card-bg: #FFFFFF;
-            --text-dark: #1A1A1A;
-            --text-gray: #8D99AE;
-            --mild: #b6d7a8;
-            --medium: #f9cb9c;
-            --high: #ea9999;
-            --danger-text: #D93025;
-            --border: #E2E8F0;
+            --primary: #0B132B; --secondary: #4a86e8; --bg: #F7F8FA;
+            --card-bg: #FFFFFF; --text-dark: #1A1A1A; --text-gray: #8D99AE;
+            --mild: #b6d7a8; --medium: #f9cb9c; --high: #ea9999;
+            --danger-text: #D93025; --border: #E2E8F0;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
         body { background-color: var(--bg); color: var(--text-dark); -webkit-font-smoothing: antialiased; padding-bottom: 80px; }
-        
         .hidden { display: none !important; }
-        
-        /* --- Typography & Buttons --- */
         h1, h2, h3 { color: var(--primary); }
         .btn { display: inline-block; width: 100%; padding: 14px; border-radius: 50px; border: none; font-size: 16px; font-weight: bold; cursor: pointer; text-align: center; transition: 0.2s; }
         .btn-primary { background-color: var(--secondary); color: white; }
         .btn-outline { background-color: transparent; border: 2px solid var(--border); color: var(--text-dark); }
-        
-        /* --- Inputs & Forms --- */
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px; margin-top: 4px; margin-bottom: 12px; background: white;}
         label { font-size: 14px; font-weight: 600; color: var(--text-gray); }
-
-        /* --- Badges --- */
         .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; }
         .b-mild, .b-operational { background: var(--mild); color: #004d00; }
         .b-medium, .b-maintenance { background: var(--medium); color: #804000; }
         .b-high, .b-repair { background: var(--high); color: #660000; }
         .b-decom { background: #cccccc; color: #333; }
-
-        /* --- Layout & Cards --- */
         .header { background: white; padding: 16px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10; }
         .tabs { display: flex; background: white; border-bottom: 1px solid var(--border); position: sticky; top: 60px; z-index: 9;}
         .tab { flex: 1; text-align: center; padding: 12px; font-weight: bold; color: var(--text-gray); cursor: pointer; border-bottom: 3px solid transparent; }
         .tab.active { color: var(--secondary); border-bottom-color: var(--secondary); }
-        
         .container { padding: 16px; }
         .card { background: var(--card-bg); border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid var(--border); cursor: pointer; }
         .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
         .card-title { font-size: 18px; font-weight: bold; }
         .card-code { font-size: 12px; color: var(--text-gray); }
         .card-qty { font-size: 24px; font-weight: bold; color: var(--secondary); margin-top: 8px;}
-
-        /* --- Floating Action Button --- */
         .fab { position: fixed; bottom: 24px; right: 24px; width: 60px; height: 60px; background-color: var(--primary); color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; z-index: 100; border: none;}
-
-        /* --- Modals --- */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: flex-end; z-index: 200; }
-        .modal-content { background: white; width: 100%; max-height: 90vh; border-radius: 20px 20px 0 0; padding: 24px; overflow-y: auto; position: relative; animation: slideUp 0.3s ease-out;}
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-content { background: white; width: 100%; max-height: 90vh; border-radius: 20px 20px 0 0; padding: 24px; overflow-y: auto; position: relative;}
         .close-btn { position: absolute; top: 16px; right: 24px; font-size: 24px; background: none; border: none; color: var(--text-gray); cursor: pointer; }
-        
         table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
         th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); }
         th { color: var(--text-gray); }
-
-        /* --- Global Loader --- */
         #loader { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .spinner { border: 4px solid var(--border); border-top: 4px solid var(--secondary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px;}
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -78,13 +52,12 @@
 </head>
 <body>
 
-    <!-- GLOBAL LOADER -->
     <div id="loader" class="hidden">
         <div class="spinner"></div>
         <p style="font-weight: bold; color: var(--primary);" id="loader-text">Loading...</p>
     </div>
 
-    <!-- LOGIN SCREEN -->
+    <!-- LOGIN -->
     <div id="login-screen" class="container" style="height: 100vh; display: flex; flex-direction: column; justify-content: center;">
         <h1 style="text-align: center; margin-bottom: 8px; font-size: 32px;">LabFlow</h1>
         <p style="text-align: center; color: var(--text-gray); margin-bottom: 32px;">Inventory & Asset Management</p>
@@ -93,12 +66,12 @@
         <button class="btn btn-primary" onclick="login()">Access System</button>
     </div>
 
-    <!-- MAIN APP SCREEN -->
+    <!-- MAIN APP -->
     <div id="app-screen" class="hidden">
         <div class="header">
             <h2>LabFlow</h2>
             <div style="text-align: right;">
-                <div style="font-size: 14px; font-weight: bold;" id="user-name">User Name</div>
+                <div style="font-size: 14px; font-weight: bold;" id="user-name">User</div>
                 <div style="font-size: 12px; color: var(--text-gray); cursor: pointer;" onclick="logout()">Logout</div>
             </div>
         </div>
@@ -109,28 +82,24 @@
             <div class="tab" onclick="switchTab('alerts')">Alerts</div>
         </div>
 
-        <!-- INVENTORY TAB -->
         <div id="tab-inventory" class="container">
             <input type="text" id="search-inventory" placeholder="🔍 Search Items..." onkeyup="renderInventory()">
             <div id="inventory-list"></div>
         </div>
 
-        <!-- EQUIPMENT TAB -->
         <div id="tab-equipment" class="container hidden">
             <input type="text" id="search-equipment" placeholder="🔍 Search Equipment..." onkeyup="renderEquipment()">
             <div id="equipment-list"></div>
         </div>
 
-        <!-- ALERTS TAB -->
         <div id="tab-alerts" class="container hidden">
             <div id="alerts-list"></div>
         </div>
 
-        <!-- FLOATING ACTION BUTTON (FAB) -->
         <button class="fab" onclick="openLogModal()">+</button>
     </div>
 
-    <!-- MATERIAL PROFILE MODAL -->
+    <!-- PROFILES -->
     <div id="profile-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="close-btn" onclick="closeModal('profile-modal')">×</button>
@@ -138,7 +107,7 @@
         </div>
     </div>
 
-    <!-- SUBMIT LOG MODAL (THE FORM) -->
+    <!-- FORM MODAL -->
     <div id="log-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="close-btn" onclick="closeModal('log-modal')">×</button>
@@ -176,7 +145,6 @@
                         </div>
                     </div>
 
-                    <!-- SOURCE LOCATIONS -->
                     <div id="source-section">
                         <label style="color:var(--primary);">Source Location</label>
                         <div style="display: flex; gap: 4px;">
@@ -186,7 +154,6 @@
                         </div>
                     </div>
 
-                    <!-- DEST LOCATIONS -->
                     <div id="dest-section">
                         <label style="color:var(--secondary);">Destination Location</label>
                         <div style="display: flex; gap: 4px;">
@@ -234,22 +201,10 @@
         </div>
     </div>
 
-    <!-- =========================================================
-         JAVASCRIPT LOGIC
-         ========================================================= -->
     <script>
-        // 1. API CONFIGURATION
         const API_URL = "https://script.google.com/macros/s/AKfycby5slhOepsc1upQb6KDYFRmJdJMpy2m5xlaAOPKa7ggfYLQ2eODayQ74xRoNqp11HvX/exec";
-        
-        // Global State
-        let appState = {
-            user: null,
-            inventory: [],
-            equipment: [],
-            currentLogType: 'Item'
-        };
+        let appState = { user: null, inventory: [], equipment: [], currentLogType: 'Item' };
 
-        // On Load Check
         window.onload = () => {
             const savedUser = localStorage.getItem('labflow_user');
             if (savedUser) {
@@ -262,8 +217,6 @@
             }
         };
 
-        // 2. CORE API HELPER
-        // We use text/plain body to avoid CORS preflight issues with Google Apps Script
         async function apiCall(action, payload) {
             showLoader("Connecting...");
             try {
@@ -286,7 +239,6 @@
         function showLoader(text) { document.getElementById('loader-text').innerText = text; document.getElementById('loader').classList.remove('hidden'); }
         function hideLoader() { document.getElementById('loader').classList.add('hidden'); }
 
-        // 3. AUTHENTICATION
         async function login() {
             const pwd = document.getElementById('login-password').value;
             if(!pwd) return alert("Enter password");
@@ -299,15 +251,11 @@
                 document.getElementById('app-screen').classList.remove('hidden');
                 populateLocationDropdowns();
                 fetchData();
-            } catch (e) {} // Error handled in apiCall
+            } catch (e) {} 
         }
 
-        function logout() {
-            localStorage.removeItem('labflow_user');
-            location.reload();
-        }
+        function logout() { localStorage.removeItem('labflow_user'); location.reload(); }
 
-        // 4. FETCH AND RENDER DATA
         async function fetchData() {
             try {
                 const data = await apiCall("get_data", {});
@@ -326,48 +274,31 @@
             document.getElementById('tab-' + tabId).classList.remove('hidden');
         }
 
-        function getDangerClass(grade) {
-            if(grade === "Mild") return "b-mild";
-            if(grade === "Medium") return "b-medium";
-            return "b-high";
-        }
-        function getStatusClass(status) {
-            if(status === "Operational") return "b-operational";
-            if(status === "Needs Repair") return "b-repair";
-            if(status === "Under Maintenance") return "b-maintenance";
-            return "b-decom";
-        }
+        function getDangerClass(grade) { return grade==="Mild"?"b-mild":grade==="Medium"?"b-medium":"b-high"; }
+        function getStatusClass(status) { return status==="Operational"?"b-operational":status==="Needs Repair"?"b-repair":status==="Under Maintenance"?"b-maintenance":"b-decom"; }
 
-        // INVENTORY (Groups flat array by Item Code)
         function renderInventory() {
             const query = document.getElementById('search-inventory').value.toLowerCase();
             const list = document.getElementById('inventory-list');
             list.innerHTML = '';
 
-            // Grouping logic
             const grouped = {};
             appState.inventory.forEach(item => {
                 if(!item.code) return;
-                if(!grouped[item.code]) {
-                    grouped[item.code] = { code: item.code, name: item.name, danger: item.danger, unit: item.unit, total: 0, batches: [] };
-                }
-                grouped[item.code].total += Number(item.total);
+                if(!grouped[item.code]) { grouped[item.code] = { code: item.code, name: item.name, danger: item.danger, unit: item.unit, total: 0, batches: [] }; }
+                // Parse correctly using the backend's new raw numbers
+                grouped[item.code].total += Number(item.total); 
                 grouped[item.code].batches.push(item);
             });
 
-            // Rendering
             Object.values(grouped).forEach(item => {
                 if (query && !item.name.toLowerCase().includes(query) && !item.code.toLowerCase().includes(query)) return;
-                
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.onclick = () => openMaterialProfile(item.code, item);
                 card.innerHTML = `
                     <div class="card-header">
-                        <div>
-                            <div class="card-title">${item.name}</div>
-                            <div class="card-code">${item.code}</div>
-                        </div>
+                        <div><div class="card-title">${item.name}</div><div class="card-code">${item.code}</div></div>
                         <span class="badge ${getDangerClass(item.danger)}">${item.danger}</span>
                     </div>
                     <div class="card-qty">${item.total.toLocaleString()} <span style="font-size:14px; color:var(--text-gray);">${item.unit}</span></div>
@@ -377,7 +308,6 @@
             });
         }
 
-        // EQUIPMENT (Flat list)
         function renderEquipment() {
             const query = document.getElementById('search-equipment').value.toLowerCase();
             const list = document.getElementById('equipment-list');
@@ -386,40 +316,34 @@
             appState.equipment.forEach(eq => {
                 if(!eq.code) return;
                 if (query && !eq.name.toLowerCase().includes(query) && !eq.code.toLowerCase().includes(query)) return;
-
-                const maintDate = eq.nextMaint ? new Date(eq.nextMaint).toLocaleDateString() : "Not Set";
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.onclick = () => openEqProfile(eq);
                 card.innerHTML = `
                     <div class="card-header">
-                        <div>
-                            <div class="card-title">${eq.name}</div>
-                            <div class="card-code">${eq.code} • ${eq.location}</div>
-                        </div>
+                        <div><div class="card-title">${eq.name}</div><div class="card-code">${eq.code} • ${eq.location}</div></div>
                         <span class="badge ${getStatusClass(eq.status)}">${eq.status}</span>
                     </div>
-                    <div style="font-size:12px; margin-top:8px;">Maint Due: <b>${maintDate}</b></div>
+                    <div style="font-size:12px; margin-top:8px;">Maint Due: <b>${eq.nextMaint || "Not Set"}</b></div>
                 `;
                 list.appendChild(card);
             });
         }
 
-        // ALERTS (Calculates Expired/Soon)
         function renderAlerts() {
             const list = document.getElementById('alerts-list');
             list.innerHTML = '';
-            
             const today = new Date();
             today.setHours(0,0,0,0);
 
             appState.inventory.forEach(item => {
                 if(!item.expiry) return;
-                const expDate = new Date(item.expiry);
-                expDate.setHours(0,0,0,0);
+                // Backend now sends strict YYYY-MM-DD
+                const expParts = item.expiry.split('-'); 
+                const expDate = new Date(expParts[0], expParts[1] - 1, expParts[2]);
                 
                 const daysLeft = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-                if (daysLeft > 90) return; // Fine
+                if (daysLeft > 90) return; 
 
                 let alertColor = "", alertText = "";
                 if(daysLeft < 0) { alertColor = "var(--danger-text)"; alertText = "EXPIRED"; }
@@ -429,27 +353,31 @@
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.style.borderLeft = `4px solid ${alertColor}`;
-                card.onclick = () => { switchTab('inventory'); document.getElementById('search-inventory').value = item.code; renderInventory(); };
                 card.innerHTML = `
                     <div style="font-weight:bold; color:${alertColor}; font-size:12px; margin-bottom:4px;">${alertText}</div>
                     <div class="card-title" style="font-size:16px;">${item.name} (${item.code})</div>
                     <div style="font-size:12px; color:var(--text-gray); margin-top:4px;">Loc: ${item.location} • ${item.closet} • ${item.shelf}</div>
-                    <div style="font-size:12px; margin-top:4px;">Qty: ${item.total} ${item.unit} | Exp: ${expDate.toLocaleDateString()}</div>
+                    <div style="font-size:12px; margin-top:4px;">Qty: ${item.total} ${item.unit} | Exp: ${item.expiry}</div>
                 `;
                 list.appendChild(card);
             });
         }
 
-        // 5. MODALS & PROFILES
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
         
         function openMaterialProfile(code, groupedData) {
             const content = document.getElementById('profile-content');
+            let tableHTML = `<table><tr><th>Location</th><th>Qty</th><th>Exp</th><th></th></tr>`;
             
-            let tableHTML = `<table><tr><th>Lab</th><th>Closet</th><th>Shelf</th><th>Qty</th><th>Expiry</th></tr>`;
+            // Render specific location batches WITH A LOG BUTTON for each to pre-fill source correctly
             groupedData.batches.forEach(b => {
-                const exp = b.expiry ? new Date(b.expiry).toLocaleDateString() : "-";
-                tableHTML += `<tr><td>${b.location}</td><td>${b.closet}</td><td>${b.shelf}</td><td>${Number(b.total).toLocaleString()}</td><td>${exp}</td></tr>`;
+                const exp = b.expiry ? b.expiry : "-";
+                tableHTML += `<tr>
+                    <td><div style="font-weight:bold;font-size:12px;">${b.location}</div><div style="font-size:10px;color:#888;">${b.closet} • ${b.shelf}</div></td>
+                    <td>${Number(b.total).toLocaleString()}</td>
+                    <td>${exp}</td>
+                    <td><button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="prefillItemForm('${b.code}', '${b.location}', '${b.closet}', '${b.shelf}')">Log</button></td>
+                </tr>`;
             });
             tableHTML += `</table>`;
 
@@ -460,15 +388,14 @@
                     <span class="badge ${getDangerClass(groupedData.danger)}">${groupedData.danger}</span>
                     <button class="btn btn-outline" style="width: auto; padding: 4px 12px; margin-left: 8px;">MSDS</button>
                 </div>
-                <h3 style="font-size: 14px; margin-top: 16px; border-bottom:1px solid #eee; padding-bottom:4px;">Location Breakdown</h3>
+                <h3 style="font-size: 14px; margin-top: 16px; border-bottom:1px solid #eee; padding-bottom:4px;">Batches in Stock</h3>
                 ${tableHTML}
-                <button class="btn btn-primary" style="margin-top:24px;" onclick="prefillForm('Item', '${groupedData.code}')">Log Movement</button>
+                <button class="btn btn-primary" style="margin-top:24px;" onclick="prefillItemForm('${groupedData.code}', '', '', '')">+ Log New Initial Stock</button>
             `;
             document.getElementById('profile-modal').classList.remove('hidden');
         }
 
         function openEqProfile(eq) {
-            const maintDate = eq.nextMaint ? new Date(eq.nextMaint).toLocaleDateString() : "Not Set";
             const content = document.getElementById('profile-content');
             content.innerHTML = `
                 <h2>${eq.name}</h2>
@@ -478,23 +405,42 @@
                     <button class="btn btn-outline" style="width: auto; padding: 4px 12px; margin-left: 8px;">Instructions</button>
                 </div>
                 <p style="margin-top:12px;"><b>Location:</b> ${eq.location}</p>
-                <p><b>Next Maintenance:</b> ${maintDate}</p>
-                <button class="btn btn-primary" style="margin-top:24px;" onclick="prefillForm('Equipment', '${eq.code}')">Update Equipment</button>
+                <p><b>Next Maintenance:</b> ${eq.nextMaint || "Not Set"}</p>
+                <button class="btn btn-primary" style="margin-top:24px;" onclick="prefillEqForm('${eq.code}', '${eq.location}')">Update Equipment</button>
             `;
             document.getElementById('profile-modal').classList.remove('hidden');
         }
 
-        // 6. FORM & SUBMISSION LOGIC
         function openLogModal() {
             document.getElementById('log-form').reset();
-            handleActionLogic(); // hide/show logic
+            handleActionLogic(); 
             document.getElementById('log-modal').classList.remove('hidden');
         }
 
-        function prefillForm(type, code) {
+        // AUTO-PREFILL FUNCTIONS
+        function prefillItemForm(code, lab, clo, shl) {
             closeModal('profile-modal');
-            setLogType(type);
-            document.getElementById(type === 'Item' ? 'item-code' : 'eq-code').value = code;
+            setLogType('Item');
+            document.getElementById('item-code').value = code;
+            if (lab && clo && shl) {
+                document.getElementById('item-action').value = "Consume"; // Assume consume by default if selecting a batch
+                document.getElementById('s-lab').value = lab;
+                document.getElementById('s-clo').value = clo;
+                document.getElementById('s-shl').value = shl;
+            } else {
+                document.getElementById('item-action').value = "Initial Stock";
+            }
+            handleActionLogic();
+            openLogModal();
+        }
+
+        function prefillEqForm(code, lab) {
+            closeModal('profile-modal');
+            setLogType('Equipment');
+            document.getElementById('eq-code').value = code;
+            document.getElementById('eq-action').value = "Status Update";
+            document.getElementById('eq-lab').value = lab;
+            handleActionLogic();
             openLogModal();
         }
 
@@ -517,7 +463,6 @@
             handleActionLogic();
         }
 
-        // Dynamically shows/hides columns based on the Action chosen
         function handleActionLogic() {
             if(appState.currentLogType === 'Item') {
                 const action = document.getElementById('item-action').value;
@@ -526,7 +471,6 @@
                 const exp = document.getElementById('expiry-section');
                 
                 src.classList.add('hidden'); dst.classList.add('hidden'); exp.classList.add('hidden');
-                // Remove required flags
                 ['s-lab','s-clo','s-shl','d-lab','d-clo','d-shl'].forEach(id => document.getElementById(id).required = false);
 
                 if(action === "Initial Stock") {
@@ -544,47 +488,32 @@
 
         async function submitLog(e) {
             e.preventDefault();
-            
             let payload = {};
             if(appState.currentLogType === 'Item') {
                 payload = {
-                    category: "Item",
-                    action: document.getElementById('item-action').value,
+                    category: "Item", action: document.getElementById('item-action').value,
                     code: document.getElementById('item-code').value.toUpperCase(),
-                    amount: document.getElementById('item-amount').value,
-                    unit: document.getElementById('item-unit').value,
-                    sourceLab: document.getElementById('s-lab').value,
-                    sourceCloset: document.getElementById('s-clo').value,
-                    sourceShelf: document.getElementById('s-shl').value,
-                    destLab: document.getElementById('d-lab').value,
-                    destCloset: document.getElementById('d-clo').value,
-                    destShelf: document.getElementById('d-shl').value,
-                    expiry: document.getElementById('item-expiry').value,
-                    techName: appState.user.name,
-                    notes: ""
+                    amount: document.getElementById('item-amount').value, unit: document.getElementById('item-unit').value,
+                    sourceLab: document.getElementById('s-lab').value, sourceCloset: document.getElementById('s-clo').value, sourceShelf: document.getElementById('s-shl').value,
+                    destLab: document.getElementById('d-lab').value, destCloset: document.getElementById('d-clo').value, destShelf: document.getElementById('d-shl').value,
+                    expiry: document.getElementById('item-expiry').value, techName: appState.user.name, notes: ""
                 };
             } else {
                 payload = {
-                    category: "Equipment",
-                    action: document.getElementById('eq-action').value,
-                    code: document.getElementById('eq-code').value.toUpperCase(),
-                    destLoc: document.getElementById('eq-lab').value,
-                    eqStatus: document.getElementById('eq-status').value,
-                    nextMaint: document.getElementById('eq-maint').value,
-                    techName: appState.user.name,
-                    notes: ""
+                    category: "Equipment", action: document.getElementById('eq-action').value,
+                    code: document.getElementById('eq-code').value.toUpperCase(), destLoc: document.getElementById('eq-lab').value,
+                    eqStatus: document.getElementById('eq-status').value, nextMaint: document.getElementById('eq-maint').value,
+                    techName: appState.user.name, notes: ""
                 };
             }
-
             try {
                 await apiCall("submit_log", payload);
                 alert("Log submitted successfully!");
                 closeModal('log-modal');
-                fetchData(); // Refresh dashboards
+                fetchData(); 
             } catch(e) {}
         }
 
-        // Utilities: Populate the location dropdowns (Lab 1-33, etc.)
         function populateLocationDropdowns() {
             let labs = "<option value=''>Select...</option>";
             for(let i=1; i<=33; i++) labs += `<option value='Lab ${i}'>Lab ${i}</option>`;
@@ -593,13 +522,9 @@
             let shelves = "<option value=''>Select...</option>";
             for(let i=1; i<=5; i++) shelves += `<option value='Shelf ${i}'>Shelf ${i}</option>`;
 
-            document.getElementById('s-lab').innerHTML = labs;
-            document.getElementById('d-lab').innerHTML = labs;
-            document.getElementById('eq-lab').innerHTML = labs;
-            document.getElementById('s-clo').innerHTML = closets;
-            document.getElementById('d-clo').innerHTML = closets;
-            document.getElementById('s-shl').innerHTML = shelves;
-            document.getElementById('d-shl').innerHTML = shelves;
+            document.getElementById('s-lab').innerHTML = labs; document.getElementById('d-lab').innerHTML = labs; document.getElementById('eq-lab').innerHTML = labs;
+            document.getElementById('s-clo').innerHTML = closets; document.getElementById('d-clo').innerHTML = closets;
+            document.getElementById('s-shl').innerHTML = shelves; document.getElementById('d-shl').innerHTML = shelves;
         }
     </script>
 </body>
