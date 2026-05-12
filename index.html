@@ -5,9 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LabFlow v5.2</title>
     <style>
-        /* =========================================================
-           CSS DESIGN SYSTEM
-           ========================================================= */
         :root {
             --primary: #0B132B; --secondary: #4a86e8; --bg: #F7F8FA;
             --card-bg: #FFFFFF; --text-dark: #1A1A1A; --text-gray: #8D99AE;
@@ -164,8 +161,8 @@
                     </div>
 
                     <div id="expiry-section">
-                        <label>Expiration Date</label>
-                        <input type="date" id="item-expiry">
+                        <label>Expiration Date (Required to identify batch)</label>
+                        <input type="date" id="item-expiry" required>
                     </div>
                 </div>
 
@@ -286,8 +283,6 @@
             appState.inventory.forEach(item => {
                 if(!item.code) return;
                 if(!grouped[item.code]) { grouped[item.code] = { code: item.code, name: item.name, danger: item.danger, unit: item.unit, total: 0, batches: [] }; }
-                
-                // Safely parse numbers (Strips commas if they exist)
                 grouped[item.code].total += Number(String(item.total).replace(/,/g, '')) || 0; 
                 grouped[item.code].batches.push(item);
             });
@@ -339,7 +334,6 @@
 
             appState.inventory.forEach(item => {
                 if(!item.expiry) return;
-                // Parse strict YYYY-MM-DD from backend
                 const expParts = item.expiry.split('-'); 
                 if (expParts.length !== 3) return;
                 
@@ -374,17 +368,15 @@
             groupedData.batches.forEach(b => {
                 const exp = b.expiry ? b.expiry : "-";
                 const safeTotal = Number(String(b.total).replace(/,/g, '')).toLocaleString();
-                
-                // Escape strings to prevent HTML breakage
                 const safeLoc = b.location.replace(/'/g, "\\'");
                 const safeClo = b.closet.replace(/'/g, "\\'");
                 const safeShl = b.shelf.replace(/'/g, "\\'");
-
+                // Passes EXP to prefill Item form
                 tableHTML += `<tr>
                     <td><div style="font-weight:bold;font-size:12px;">${b.location}</div><div style="font-size:10px;color:#888;">${b.closet} • ${b.shelf}</div></td>
                     <td>${safeTotal}</td>
                     <td>${exp}</td>
-                    <td><button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="prefillItemForm('${b.code}', '${safeLoc}', '${safeClo}', '${safeShl}')">Log</button></td>
+                    <td><button class="btn btn-outline" style="padding:4px 8px; font-size:12px;" onclick="prefillItemForm('${b.code}', '${safeLoc}', '${safeClo}', '${safeShl}', '${exp}')">Log</button></td>
                 </tr>`;
             });
             tableHTML += `</table>`;
@@ -398,7 +390,7 @@
                 </div>
                 <h3 style="font-size: 14px; margin-top: 16px; border-bottom:1px solid #eee; padding-bottom:4px;">Batches in Stock</h3>
                 ${tableHTML}
-                <button class="btn btn-primary" style="margin-top:24px;" onclick="prefillItemForm('${groupedData.code}', '', '', '')">+ Log New Initial Stock</button>
+                <button class="btn btn-primary" style="margin-top:24px;" onclick="prefillItemForm('${groupedData.code}', '', '', '', '')">+ Log New Initial Stock</button>
             `;
             document.getElementById('profile-modal').classList.remove('hidden');
         }
@@ -428,11 +420,11 @@
         }
 
         // ==========================================
-        // FIXED PRE-FILL FUNCTIONS
+        // AUTO PRE-FILL FUNCTIONS
         // ==========================================
-        function prefillItemForm(code, lab, clo, shl) {
+        function prefillItemForm(code, lab, clo, shl, exp) {
             closeModal('profile-modal');
-            document.getElementById('log-form').reset(); // Reset FIRST
+            document.getElementById('log-form').reset(); 
             
             setLogType('Item');
             document.getElementById('item-code').value = code;
@@ -443,6 +435,7 @@
                 document.getElementById('s-lab').value = lab;
                 document.getElementById('s-clo').value = clo;
                 document.getElementById('s-shl').value = shl;
+                if (exp && exp !== "-") document.getElementById('item-expiry').value = exp;
             } else {
                 document.getElementById('item-action').value = "Initial Stock";
                 handleActionLogic(); 
@@ -453,7 +446,7 @@
 
         function prefillEqForm(code, lab) {
             closeModal('profile-modal');
-            document.getElementById('log-form').reset(); // Reset FIRST
+            document.getElementById('log-form').reset(); 
             
             setLogType('Equipment');
             document.getElementById('eq-code').value = code;
@@ -484,6 +477,9 @@
             handleActionLogic();
         }
 
+        // ==========================================
+        // ACTION DYNAMIC SHOW/HIDE LOGIC
+        // ==========================================
         function handleActionLogic() {
             if(appState.currentLogType === 'Item') {
                 const action = document.getElementById('item-action').value;
@@ -491,11 +487,16 @@
                 const dst = document.getElementById('dest-section');
                 const exp = document.getElementById('expiry-section');
                 
-                src.classList.add('hidden'); dst.classList.add('hidden'); exp.classList.add('hidden');
+                src.classList.add('hidden'); dst.classList.add('hidden'); 
+                
+                // Expiry is ALWAYS required for Items so the backend can identify the batch
+                exp.classList.remove('hidden');
+                document.getElementById('item-expiry').required = true;
+
                 ['s-lab','s-clo','s-shl','d-lab','d-clo','d-shl'].forEach(id => document.getElementById(id).required = false);
 
                 if(action === "Initial Stock") {
-                    dst.classList.remove('hidden'); exp.classList.remove('hidden');
+                    dst.classList.remove('hidden'); 
                     ['d-lab','d-clo','d-shl'].forEach(id => document.getElementById(id).required = true);
                 } else if (action === "Transfer") {
                     src.classList.remove('hidden'); dst.classList.remove('hidden');
