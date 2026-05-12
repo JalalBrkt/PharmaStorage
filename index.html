@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LabFlow v5.2</title>
     <style>
+        /* =========================================================
+           CSS DESIGN SYSTEM
+           ========================================================= */
         :root {
             --primary: #0B132B; --secondary: #4a86e8; --bg: #F7F8FA;
             --card-bg: #FFFFFF; --text-dark: #1A1A1A; --text-gray: #8D99AE;
@@ -125,8 +128,10 @@
                         <option value="Consume">Consume</option>
                     </select>
 
-                    <label>Item Code</label>
-                    <input type="text" id="item-code" required placeholder="e.g., SOL-001">
+                    <label>Item Name</label>
+                    <select id="item-code" required>
+                        <option value="">Loading Dictionary...</option>
+                    </select>
 
                     <div style="display: flex; gap: 8px;">
                         <div style="flex: 2;">
@@ -175,8 +180,10 @@
                         <option value="Status Update">Status Update</option>
                     </select>
 
-                    <label>Equipment Code</label>
-                    <input type="text" id="eq-code" placeholder="e.g., EQ-001">
+                    <label>Equipment Name</label>
+                    <select id="eq-code">
+                        <option value="">Loading Dictionary...</option>
+                    </select>
 
                     <label>Current / Dest Lab</label>
                     <select id="eq-lab"><option value="">Select Lab...</option></select>
@@ -200,7 +207,7 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycby5slhOepsc1upQb6KDYFRmJdJMpy2m5xlaAOPKa7ggfYLQ2eODayQ74xRoNqp11HvX/exec";
-        let appState = { user: null, inventory: [], equipment: [], currentLogType: 'Item' };
+        let appState = { user: null, inventory: [], equipment: [], catalogItems: [], catalogEq: [], currentLogType: 'Item' };
 
         window.onload = () => {
             const savedUser = localStorage.getItem('labflow_user');
@@ -258,10 +265,28 @@
                 const data = await apiCall("get_data", {});
                 appState.inventory = data.inventory;
                 appState.equipment = data.equipment;
+                appState.catalogItems = data.catalogItems || [];
+                appState.catalogEq = data.catalogEq || [];
+                
                 renderInventory();
                 renderEquipment();
                 renderAlerts();
+                populateCatalogDropdowns();
             } catch (e) {}
+        }
+
+        function populateCatalogDropdowns() {
+            let itemOpts = '<option value="">Select Item from Dictionary...</option>';
+            appState.catalogItems.forEach(i => {
+                itemOpts += `<option value="${i.code}">${i.name} (${i.code})</option>`;
+            });
+            document.getElementById('item-code').innerHTML = itemOpts;
+
+            let eqOpts = '<option value="">Select Equipment from Dictionary...</option>';
+            appState.catalogEq.forEach(e => {
+                eqOpts += `<option value="${e.code}">${e.name} (${e.code})</option>`;
+            });
+            document.getElementById('eq-code').innerHTML = eqOpts;
         }
 
         function switchTab(tabId) {
@@ -371,7 +396,6 @@
                 const safeLoc = b.location.replace(/'/g, "\\'");
                 const safeClo = b.closet.replace(/'/g, "\\'");
                 const safeShl = b.shelf.replace(/'/g, "\\'");
-                // Passes EXP to prefill Item form
                 tableHTML += `<tr>
                     <td><div style="font-weight:bold;font-size:12px;">${b.location}</div><div style="font-size:10px;color:#888;">${b.closet} • ${b.shelf}</div></td>
                     <td>${safeTotal}</td>
@@ -489,7 +513,6 @@
                 
                 src.classList.add('hidden'); dst.classList.add('hidden'); 
                 
-                // Expiry is ALWAYS required for Items so the backend can identify the batch
                 exp.classList.remove('hidden');
                 document.getElementById('item-expiry').required = true;
 
