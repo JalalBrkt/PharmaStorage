@@ -121,7 +121,7 @@
             <form id="log-form" onsubmit="submitLog(event)">
                 <div id="form-item-section">
                     <label>Action</label>
-                    <select id="item-action" required onchange="handleActionLogic()">
+                    <select id="item-action" onchange="handleActionLogic()">
                         <option value="">Select Action...</option>
                         <option value="Initial Stock">Initial Stock</option>
                         <option value="Transfer">Transfer</option>
@@ -129,7 +129,7 @@
                     </select>
 
                     <label>Item Name</label>
-                    <select id="item-code" required>
+                    <select id="item-code">
                         <option value="">Loading Dictionary...</option>
                     </select>
 
@@ -167,7 +167,7 @@
 
                     <div id="expiry-section">
                         <label>Expiration Date (Required to identify batch)</label>
-                        <input type="date" id="item-expiry" required>
+                        <input type="date" id="item-expiry">
                     </div>
                 </div>
 
@@ -439,7 +439,7 @@
 
         function openLogModal() {
             document.getElementById('log-form').reset();
-            handleActionLogic(); 
+            setLogType(appState.currentLogType); // Safely sets the correct required fields
             document.getElementById('log-modal').classList.remove('hidden');
         }
 
@@ -482,6 +482,9 @@
             document.getElementById('log-modal').classList.remove('hidden');
         }
 
+        // ==========================================
+        // TOGGLE LOGIC (FIX FOR SILENT HTML5 ERRORS)
+        // ==========================================
         function setLogType(type) {
             appState.currentLogType = type;
             document.getElementById('toggle-item').style = type === 'Item' ? "flex:1; border-color:var(--secondary); color:var(--secondary);" : "flex:1;";
@@ -490,20 +493,39 @@
             if(type === 'Item') {
                 document.getElementById('form-item-section').classList.remove('hidden');
                 document.getElementById('form-eq-section').classList.add('hidden');
+                
+                // Add required back to Item fields
                 document.getElementById('item-action').required = true;
+                document.getElementById('item-code').required = true;
+                document.getElementById('item-expiry').required = true;
+                
+                // Strip required from Equipment fields
                 document.getElementById('eq-action').required = false;
+                document.getElementById('eq-code').required = false;
+                document.getElementById('eq-lab').required = false;
             } else {
                 document.getElementById('form-item-section').classList.add('hidden');
                 document.getElementById('form-eq-section').classList.remove('hidden');
+                
+                // Strip required from Item fields
                 document.getElementById('item-action').required = false;
+                document.getElementById('item-code').required = false;
+                document.getElementById('item-expiry').required = false;
+                
+                // Clear any leftover required tags on location fields
+                ['s-lab','s-clo','s-shl','d-lab','d-clo','d-shl'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) el.required = false;
+                });
+                
+                // Add required to Equipment fields
                 document.getElementById('eq-action').required = true;
+                document.getElementById('eq-code').required = true;
+                document.getElementById('eq-lab').required = true;
             }
             handleActionLogic();
         }
 
-        // ==========================================
-        // ACTION DYNAMIC SHOW/HIDE LOGIC
-        // ==========================================
         function handleActionLogic() {
             if(appState.currentLogType === 'Item') {
                 const action = document.getElementById('item-action').value;
