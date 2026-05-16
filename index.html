@@ -209,7 +209,7 @@
             const savedUser = localStorage.getItem('labflow_user');
             if (savedUser) {
                 appState.user = JSON.parse(savedUser);
-                document.getElementById('user-name').innerText = appState.user.name + " (" + appState.user.role + ")";
+                document.getElementById('user-name').innerText = appState.user.name;
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app-screen').classList.remove('hidden');
                 applyRoleRestrictions();
@@ -219,11 +219,11 @@
         };
 
         // ==========================================
-        // ROLE RESTRICTION LOGIC
+        // ROLE RESTRICTION LOGIC (UPDATED)
         // ==========================================
         function applyRoleRestrictions() {
             if (!appState.user) return;
-            const isTech = appState.user.role === 'Technician';
+            const isTech = appState.user.role.includes('Technician');
             
             // Hide Tabs
             document.getElementById('tab-btn-equipment').style.display = isTech ? 'none' : 'block';
@@ -264,7 +264,7 @@
                 const data = await apiCall("login", { password: pwd });
                 appState.user = data.user;
                 localStorage.setItem('labflow_user', JSON.stringify(appState.user));
-                document.getElementById('user-name').innerText = appState.user.name + " (" + appState.user.role + ")";
+                document.getElementById('user-name').innerText = appState.user.name;
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app-screen').classList.remove('hidden');
                 applyRoleRestrictions();
@@ -284,7 +284,7 @@
                 appState.catalogEq = data.catalogEq || [];
                 
                 renderInventory();
-                if (appState.user.role !== 'Technician') {
+                if (!appState.user.role.includes('Technician')) {
                     renderEquipment();
                     renderAlerts();
                 }
@@ -321,10 +321,10 @@
             const list = document.getElementById('inventory-list');
             list.innerHTML = '';
 
-            // Get Technician's assigned lab
+            // Get Technician's assigned lab from the ROLE column
             let assignedLab = null;
-            if (appState.user.role === 'Technician') {
-                const match = appState.user.name.match(/\d+/);
+            if (appState.user.role.includes('Technician')) {
+                const match = appState.user.role.match(/\d+/);
                 if (match) assignedLab = "Lab " + match[0];
             }
 
@@ -469,9 +469,9 @@
             document.getElementById('log-form').reset();
             setLogType(appState.currentLogType);
             
-            // Pre-select assigned lab for Technicians to save them time
-            if (appState.user.role === 'Technician') {
-                const match = appState.user.name.match(/\d+/);
+            // Pre-select assigned lab for Technicians based on ROLE
+            if (appState.user.role.includes('Technician')) {
+                const match = appState.user.role.match(/\d+/);
                 if (match) {
                     const labStr = "Lab " + match[0];
                     document.getElementById('d-lab').value = labStr;
@@ -498,9 +498,9 @@
             } else {
                 document.getElementById('item-action').value = "Initial Stock";
                 handleActionLogic();
-                // Pre-select Dest Lab for techs
-                if (appState.user.role === 'Technician') {
-                    const match = appState.user.name.match(/\d+/);
+                // Pre-select Dest Lab for techs based on ROLE
+                if (appState.user.role.includes('Technician')) {
+                    const match = appState.user.role.match(/\d+/);
                     if (match) document.getElementById('d-lab').value = "Lab " + match[0];
                 }
             }
@@ -588,9 +588,9 @@
         async function submitLog(e) {
             e.preventDefault();
 
-            // ROLE VALIDATION RULES
-            if (appState.user.role === 'Technician' && appState.currentLogType === 'Item') {
-                const match = appState.user.name.match(/\d+/);
+            // ROLE VALIDATION RULES (Using ROLE column)
+            if (appState.user.role.includes('Technician') && appState.currentLogType === 'Item') {
+                const match = appState.user.role.match(/\d+/);
                 const assignedLab = match ? "Lab " + match[0] : null;
                 
                 if (assignedLab) {
