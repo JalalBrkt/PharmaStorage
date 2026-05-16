@@ -241,7 +241,6 @@
                 appState.inventory.forEach(item => {
                     if(!item.code) return;
                     if (assignedLab && item.location !== assignedLab) return;
-                    // Wrap strings in quotes to protect against commas in names
                     csvString += `"${item.code}","${item.name}","${item.danger}","${item.location}","${item.closet}","${item.shelf}","${item.expiry}","${item.total}","${item.unit}"\n`;
                 });
 
@@ -256,7 +255,6 @@
                 return;
             }
 
-            // Create invisible download link
             const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
@@ -267,9 +265,6 @@
             document.body.removeChild(link);
         }
 
-        // ==========================================
-        // ROLE RESTRICTION LOGIC
-        // ==========================================
         function applyRoleRestrictions() {
             if (!appState.user) return;
             const isTech = appState.user.role.includes('Technician');
@@ -338,9 +333,6 @@
             } catch (e) {}
         }
 
-        // ==========================================
-        // POPULATE SEARCHABLE DATALISTS
-        // ==========================================
         function populateCatalogDropdowns() {
             let itemOpts = '';
             appState.catalogItems.forEach(i => {
@@ -531,7 +523,6 @@
             document.getElementById('log-form').reset(); 
             setLogType('Item');
             
-            // Format Datalist pre-fill nicely
             const catItem = appState.catalogItems.find(i => i.code === code);
             document.getElementById('item-code').value = catItem ? `${code} - ${catItem.name}` : code;
             
@@ -558,7 +549,6 @@
             document.getElementById('log-form').reset(); 
             setLogType('Equipment');
             
-            // Format Datalist pre-fill nicely
             const catEq = appState.catalogEq.find(e => e.code === code);
             document.getElementById('eq-code').value = catEq ? `${code} - ${catEq.name}` : code;
             
@@ -655,12 +645,12 @@
                 }
             }
 
-            // Extract exact code from the Datalist string (e.g. "SOL-001 - Ethanol 95%" -> "SOL-001")
+            // FIX: Split by " - " instead of "-" so it handles codes like SOL-001 safely
             const rawItemCode = document.getElementById('item-code').value;
-            const itemCodeClean = rawItemCode.split('-')[0].trim().toUpperCase();
+            const itemCodeClean = rawItemCode.split(' - ')[0].trim().toUpperCase();
 
             const rawEqCode = document.getElementById('eq-code').value;
-            const eqCodeClean = rawEqCode.split('-')[0].trim().toUpperCase();
+            const eqCodeClean = rawEqCode.split(' - ')[0].trim().toUpperCase();
 
             let payload = {};
             if(appState.currentLogType === 'Item') {
