@@ -219,19 +219,13 @@
             }
         };
 
-        // ==========================================
-        // EXPORT TO CSV FUNCTION
-        // ==========================================
         function exportToCSV() {
             const isTech = appState.user.role.includes('Technician');
             const activeTab = document.querySelector('.tab.active').id;
-            
-            // Add UTF-8 BOM so Excel opens Arabic properly
             let csvString = "\uFEFF"; 
 
             if (activeTab === 'tab-btn-inventory') {
                 csvString += "Item Code,Name,Danger Grade,Location,Closet,Shelf,Expiry,Total Qty,Unit\n";
-                
                 let assignedLab = null;
                 if (isTech) {
                     const match = appState.user.role.match(/\d+/);
@@ -333,16 +327,21 @@
             } catch (e) {}
         }
 
+        // ==========================================
+        // POPULATE SEARCHABLE DATALISTS (FIXED FORMAT)
+        // ==========================================
         function populateCatalogDropdowns() {
             let itemOpts = '';
             appState.catalogItems.forEach(i => {
-                itemOpts += `<option value="${i.code} - ${i.name}">`;
+                // Formats as: "Acetone [SOL-001]"
+                itemOpts += `<option value="${i.name} [${i.code}]">`;
             });
             document.getElementById('item-code-list').innerHTML = itemOpts;
 
             let eqOpts = '';
             appState.catalogEq.forEach(e => {
-                eqOpts += `<option value="${e.code} - ${e.name}">`;
+                // Formats as: "Centrifuge [EQ-001]"
+                eqOpts += `<option value="${e.name} [${e.code}]">`;
             });
             document.getElementById('eq-code-list').innerHTML = eqOpts;
         }
@@ -518,13 +517,17 @@
             document.getElementById('log-modal').classList.remove('hidden');
         }
 
+        // ==========================================
+        // AUTO PRE-FILL FUNCTIONS (FIXED)
+        // ==========================================
         function prefillItemForm(code, lab, clo, shl, exp) {
             closeModal('profile-modal');
             document.getElementById('log-form').reset(); 
             setLogType('Item');
             
+            // Format Datalist pre-fill securely
             const catItem = appState.catalogItems.find(i => i.code === code);
-            document.getElementById('item-code').value = catItem ? `${code} - ${catItem.name}` : code;
+            document.getElementById('item-code').value = catItem ? `${catItem.name} [${code}]` : code;
             
             if (lab && clo && shl) {
                 document.getElementById('item-action').value = "Consume"; 
@@ -549,8 +552,9 @@
             document.getElementById('log-form').reset(); 
             setLogType('Equipment');
             
+            // Format Datalist pre-fill securely
             const catEq = appState.catalogEq.find(e => e.code === code);
-            document.getElementById('eq-code').value = catEq ? `${code} - ${catEq.name}` : code;
+            document.getElementById('eq-code').value = catEq ? `${catEq.name} [${code}]` : code;
             
             document.getElementById('eq-action').value = "Status Update";
             handleActionLogic(); 
@@ -621,6 +625,16 @@
             }
         }
 
+        // ==========================================
+        // FOOLPROOF REGEX EXTRACTION
+        // ==========================================
+        function extractCodeFromBrackets(inputStr) {
+            // Looks for anything inside brackets [ ] and extracts it. 
+            // If no brackets exist, it just returns the original typed string.
+            const match = inputStr.match(/\[(.*?)\]/);
+            return match ? match[1].trim().toUpperCase() : inputStr.trim().toUpperCase();
+        }
+
         async function submitLog(e) {
             e.preventDefault();
 
@@ -645,12 +659,12 @@
                 }
             }
 
-            // FIX: Split by " - " instead of "-" so it handles codes like SOL-001 safely
+            // Securely extract the Code whether it has brackets, hyphens, or is typed manually
             const rawItemCode = document.getElementById('item-code').value;
-            const itemCodeClean = rawItemCode.split(' - ')[0].trim().toUpperCase();
+            const itemCodeClean = extractCodeFromBrackets(rawItemCode);
 
             const rawEqCode = document.getElementById('eq-code').value;
-            const eqCodeClean = rawEqCode.split(' - ')[0].trim().toUpperCase();
+            const eqCodeClean = extractCodeFromBrackets(rawEqCode);
 
             let payload = {};
             if(appState.currentLogType === 'Item') {
