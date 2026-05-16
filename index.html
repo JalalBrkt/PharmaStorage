@@ -57,7 +57,6 @@
         <p style="font-weight: bold; color: var(--primary);" id="loader-text">Loading...</p>
     </div>
 
-    <!-- LOGIN -->
     <div id="login-screen" class="container" style="height: 100vh; display: flex; flex-direction: column; justify-content: center;">
         <h1 style="text-align: center; margin-bottom: 8px; font-size: 32px;">LabFlow</h1>
         <p style="text-align: center; color: var(--text-gray); margin-bottom: 32px;">Inventory & Asset Management</p>
@@ -66,7 +65,6 @@
         <button class="btn btn-primary" onclick="login()">Access System</button>
     </div>
 
-    <!-- MAIN APP -->
     <div id="app-screen" class="hidden">
         <div class="header">
             <h2>LabFlow</h2>
@@ -77,9 +75,9 @@
         </div>
 
         <div class="tabs">
-            <div class="tab active" onclick="switchTab('inventory')">Inventory</div>
-            <div class="tab" onclick="switchTab('equipment')">Equipment</div>
-            <div class="tab" onclick="switchTab('alerts')">Alerts</div>
+            <div class="tab active" onclick="switchTab('inventory')" id="tab-btn-inventory">Inventory</div>
+            <div class="tab" onclick="switchTab('equipment')" id="tab-btn-equipment">Equipment</div>
+            <div class="tab" onclick="switchTab('alerts')" id="tab-btn-alerts">Alerts</div>
         </div>
 
         <div id="tab-inventory" class="container">
@@ -99,7 +97,6 @@
         <button class="fab" onclick="openLogModal()">+</button>
     </div>
 
-    <!-- PROFILES -->
     <div id="profile-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="close-btn" onclick="closeModal('profile-modal')">×</button>
@@ -107,7 +104,6 @@
         </div>
     </div>
 
-    <!-- FORM MODAL -->
     <div id="log-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <button class="close-btn" onclick="closeModal('log-modal')">×</button>
@@ -121,7 +117,7 @@
             <form id="log-form" onsubmit="submitLog(event)">
                 <div id="form-item-section">
                     <label>Action</label>
-                    <select id="item-action" onchange="handleActionLogic()">
+                    <select id="item-action" required onchange="handleActionLogic()">
                         <option value="">Select Action...</option>
                         <option value="Initial Stock">Initial Stock</option>
                         <option value="Transfer">Transfer</option>
@@ -129,7 +125,7 @@
                     </select>
 
                     <label>Item Name</label>
-                    <select id="item-code">
+                    <select id="item-code" required>
                         <option value="">Loading Dictionary...</option>
                     </select>
 
@@ -167,7 +163,7 @@
 
                     <div id="expiry-section">
                         <label>Expiration Date (Required to identify batch)</label>
-                        <input type="date" id="item-expiry">
+                        <input type="date" id="item-expiry" required>
                     </div>
                 </div>
 
@@ -216,10 +212,28 @@
                 document.getElementById('user-name').innerText = appState.user.name + " (" + appState.user.role + ")";
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app-screen').classList.remove('hidden');
+                applyRoleRestrictions();
                 populateLocationDropdowns();
                 fetchData();
             }
         };
+
+        // ==========================================
+        // ROLE RESTRICTION LOGIC
+        // ==========================================
+        function applyRoleRestrictions() {
+            if (!appState.user) return;
+            const isTech = appState.user.role === 'Technician';
+            
+            // Hide Tabs
+            document.getElementById('tab-btn-equipment').style.display = isTech ? 'none' : 'block';
+            document.getElementById('tab-btn-alerts').style.display = isTech ? 'none' : 'block';
+            
+            // Hide Equipment Log Toggle
+            document.getElementById('toggle-eq').style.display = isTech ? 'none' : 'block';
+            
+            if (isTech) switchTab('inventory');
+        }
 
         async function apiCall(action, payload) {
             showLoader("Connecting...");
@@ -253,6 +267,7 @@
                 document.getElementById('user-name').innerText = appState.user.name + " (" + appState.user.role + ")";
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app-screen').classList.remove('hidden');
+                applyRoleRestrictions();
                 populateLocationDropdowns();
                 fetchData();
             } catch (e) {} 
@@ -269,8 +284,10 @@
                 appState.catalogEq = data.catalogEq || [];
                 
                 renderInventory();
-                renderEquipment();
-                renderAlerts();
+                if (appState.user.role !== 'Technician') {
+                    renderEquipment();
+                    renderAlerts();
+                }
                 populateCatalogDropdowns();
             } catch (e) {}
         }
@@ -292,7 +309,7 @@
         function switchTab(tabId) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('#app-screen .container').forEach(c => c.classList.add('hidden'));
-            event.target.classList.add('active');
+            document.getElementById('tab-btn-' + tabId).classList.add('active');
             document.getElementById('tab-' + tabId).classList.remove('hidden');
         }
 
@@ -304,9 +321,20 @@
             const list = document.getElementById('inventory-list');
             list.innerHTML = '';
 
+            // Get Technician's assigned lab
+            let assignedLab = null;
+            if (appState.user.role === 'Technician') {
+                const match = appState.user.name.match(/\d+/);
+                if (match) assignedLab = "Lab " + match[0];
+            }
+
             const grouped = {};
             appState.inventory.forEach(item => {
                 if(!item.code) return;
+                
+                // RESTRICTION: Only process items in their specific lab
+                if (assignedLab && item.location !== assignedLab) return;
+
                 if(!grouped[item.code]) { grouped[item.code] = { code: item.code, name: item.name, danger: item.danger, unit: item.unit, total: 0, batches: [] }; }
                 grouped[item.code].total += Number(String(item.total).replace(/,/g, '')) || 0; 
                 grouped[item.code].batches.push(item);
@@ -439,13 +467,20 @@
 
         function openLogModal() {
             document.getElementById('log-form').reset();
-            setLogType(appState.currentLogType); // Safely sets the correct required fields
+            setLogType(appState.currentLogType);
+            
+            // Pre-select assigned lab for Technicians to save them time
+            if (appState.user.role === 'Technician') {
+                const match = appState.user.name.match(/\d+/);
+                if (match) {
+                    const labStr = "Lab " + match[0];
+                    document.getElementById('d-lab').value = labStr;
+                    document.getElementById('s-lab').value = labStr;
+                }
+            }
             document.getElementById('log-modal').classList.remove('hidden');
         }
 
-        // ==========================================
-        // AUTO PRE-FILL FUNCTIONS
-        // ==========================================
         function prefillItemForm(code, lab, clo, shl, exp) {
             closeModal('profile-modal');
             document.getElementById('log-form').reset(); 
@@ -462,7 +497,12 @@
                 if (exp && exp !== "-") document.getElementById('item-expiry').value = exp;
             } else {
                 document.getElementById('item-action').value = "Initial Stock";
-                handleActionLogic(); 
+                handleActionLogic();
+                // Pre-select Dest Lab for techs
+                if (appState.user.role === 'Technician') {
+                    const match = appState.user.name.match(/\d+/);
+                    if (match) document.getElementById('d-lab').value = "Lab " + match[0];
+                }
             }
             
             document.getElementById('log-modal').classList.remove('hidden');
@@ -482,9 +522,6 @@
             document.getElementById('log-modal').classList.remove('hidden');
         }
 
-        // ==========================================
-        // TOGGLE LOGIC (FIX FOR SILENT HTML5 ERRORS)
-        // ==========================================
         function setLogType(type) {
             appState.currentLogType = type;
             document.getElementById('toggle-item').style = type === 'Item' ? "flex:1; border-color:var(--secondary); color:var(--secondary);" : "flex:1;";
@@ -494,12 +531,10 @@
                 document.getElementById('form-item-section').classList.remove('hidden');
                 document.getElementById('form-eq-section').classList.add('hidden');
                 
-                // Add required back to Item fields
                 document.getElementById('item-action').required = true;
                 document.getElementById('item-code').required = true;
                 document.getElementById('item-expiry').required = true;
                 
-                // Strip required from Equipment fields
                 document.getElementById('eq-action').required = false;
                 document.getElementById('eq-code').required = false;
                 document.getElementById('eq-lab').required = false;
@@ -507,18 +542,15 @@
                 document.getElementById('form-item-section').classList.add('hidden');
                 document.getElementById('form-eq-section').classList.remove('hidden');
                 
-                // Strip required from Item fields
                 document.getElementById('item-action').required = false;
                 document.getElementById('item-code').required = false;
                 document.getElementById('item-expiry').required = false;
                 
-                // Clear any leftover required tags on location fields
                 ['s-lab','s-clo','s-shl','d-lab','d-clo','d-shl'].forEach(id => {
                     const el = document.getElementById(id);
                     if(el) el.required = false;
                 });
                 
-                // Add required to Equipment fields
                 document.getElementById('eq-action').required = true;
                 document.getElementById('eq-code').required = true;
                 document.getElementById('eq-lab').required = true;
@@ -555,6 +587,29 @@
 
         async function submitLog(e) {
             e.preventDefault();
+
+            // ROLE VALIDATION RULES
+            if (appState.user.role === 'Technician' && appState.currentLogType === 'Item') {
+                const match = appState.user.name.match(/\d+/);
+                const assignedLab = match ? "Lab " + match[0] : null;
+                
+                if (assignedLab) {
+                    const action = document.getElementById('item-action').value;
+                    const sLab = document.getElementById('s-lab').value;
+                    const dLab = document.getElementById('d-lab').value;
+
+                    if (action === "Initial Stock" && dLab !== assignedLab) {
+                        return alert(`Access Denied: Technicians can only add Initial Stock to their assigned lab (${assignedLab}).`);
+                    }
+                    if (action === "Consume" && sLab !== assignedLab) {
+                        return alert(`Access Denied: Technicians can only consume items from their assigned lab (${assignedLab}).`);
+                    }
+                    if (action === "Transfer" && sLab !== assignedLab && dLab !== assignedLab) {
+                        return alert(`Access Denied: Transfers must originate from or be destined to your assigned lab (${assignedLab}).`);
+                    }
+                }
+            }
+
             let payload = {};
             if(appState.currentLogType === 'Item') {
                 payload = {
