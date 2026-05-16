@@ -68,9 +68,12 @@
     <div id="app-screen" class="hidden">
         <div class="header">
             <h2>LabFlow</h2>
-            <div style="text-align: right;">
-                <div style="font-size: 14px; font-weight: bold;" id="user-name">User</div>
-                <div style="font-size: 12px; color: var(--text-gray); cursor: pointer;" onclick="logout()">Logout</div>
+            <div style="text-align: right; display: flex; align-items: center; gap: 12px;">
+                <button class="btn btn-outline" style="padding: 4px 12px; font-size: 12px; width: auto; border-color: var(--secondary); color: var(--secondary);" onclick="exportToCSV()">⬇ Export Data</button>
+                <div>
+                    <div style="font-size: 14px; font-weight: bold;" id="user-name">User</div>
+                    <div style="font-size: 12px; color: var(--text-gray); cursor: pointer;" onclick="logout()">Logout</div>
+                </div>
             </div>
         </div>
 
@@ -124,10 +127,9 @@
                         <option value="Consume">Consume</option>
                     </select>
 
-                    <label>Item Name</label>
-                    <select id="item-code" required>
-                        <option value="">Loading Dictionary...</option>
-                    </select>
+                    <label>Item Search</label>
+                    <input list="item-code-list" id="item-code" required placeholder="Type Name or Code...">
+                    <datalist id="item-code-list"></datalist>
 
                     <div style="display: flex; gap: 8px;">
                         <div style="flex: 2;">
@@ -176,10 +178,9 @@
                         <option value="Status Update">Status Update</option>
                     </select>
 
-                    <label>Equipment Name</label>
-                    <select id="eq-code">
-                        <option value="">Loading Dictionary...</option>
-                    </select>
+                    <label>Equipment Search</label>
+                    <input list="eq-code-list" id="eq-code" placeholder="Type Name or Code...">
+                    <datalist id="eq-code-list"></datalist>
 
                     <label>Current / Dest Lab</label>
                     <select id="eq-lab"><option value="">Select Lab...</option></select>
@@ -219,17 +220,62 @@
         };
 
         // ==========================================
-        // ROLE RESTRICTION LOGIC (UPDATED)
+        // EXPORT TO CSV FUNCTION
+        // ==========================================
+        function exportToCSV() {
+            const isTech = appState.user.role.includes('Technician');
+            const activeTab = document.querySelector('.tab.active').id;
+            
+            // Add UTF-8 BOM so Excel opens Arabic properly
+            let csvString = "\uFEFF"; 
+
+            if (activeTab === 'tab-btn-inventory') {
+                csvString += "Item Code,Name,Danger Grade,Location,Closet,Shelf,Expiry,Total Qty,Unit\n";
+                
+                let assignedLab = null;
+                if (isTech) {
+                    const match = appState.user.role.match(/\d+/);
+                    if (match) assignedLab = "Lab " + match[0];
+                }
+
+                appState.inventory.forEach(item => {
+                    if(!item.code) return;
+                    if (assignedLab && item.location !== assignedLab) return;
+                    // Wrap strings in quotes to protect against commas in names
+                    csvString += `"${item.code}","${item.name}","${item.danger}","${item.location}","${item.closet}","${item.shelf}","${item.expiry}","${item.total}","${item.unit}"\n`;
+                });
+
+            } else if (activeTab === 'tab-btn-equipment') {
+                csvString += "Equipment Code,Name,Location,Status,Next Maintenance\n";
+                appState.equipment.forEach(eq => {
+                    if(!eq.code) return;
+                    csvString += `"${eq.code}","${eq.name}","${eq.location}","${eq.status}","${eq.nextMaint || 'Not Set'}"\n`;
+                });
+            } else {
+                alert("Export is only available for the Inventory and Equipment tabs.");
+                return;
+            }
+
+            // Create invisible download link
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `LabFlow_Export_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // ==========================================
+        // ROLE RESTRICTION LOGIC
         // ==========================================
         function applyRoleRestrictions() {
             if (!appState.user) return;
             const isTech = appState.user.role.includes('Technician');
             
-            // Hide Tabs
             document.getElementById('tab-btn-equipment').style.display = isTech ? 'none' : 'block';
             document.getElementById('tab-btn-alerts').style.display = isTech ? 'none' : 'block';
-            
-            // Hide Equipment Log Toggle
             document.getElementById('toggle-eq').style.display = isTech ? 'none' : 'block';
             
             if (isTech) switchTab('inventory');
@@ -292,18 +338,21 @@
             } catch (e) {}
         }
 
+        // ==========================================
+        // POPULATE SEARCHABLE DATALISTS
+        // ==========================================
         function populateCatalogDropdowns() {
-            let itemOpts = '<option value="">Select Item from Dictionary...</option>';
+            let itemOpts = '';
             appState.catalogItems.forEach(i => {
-                itemOpts += `<option value="${i.code}">${i.name} (${i.code})</option>`;
+                itemOpts += `<option value="${i.code} - ${i.name}">`;
             });
-            document.getElementById('item-code').innerHTML = itemOpts;
+            document.getElementById('item-code-list').innerHTML = itemOpts;
 
-            let eqOpts = '<option value="">Select Equipment from Dictionary...</option>';
+            let eqOpts = '';
             appState.catalogEq.forEach(e => {
-                eqOpts += `<option value="${e.code}">${e.name} (${e.code})</option>`;
+                eqOpts += `<option value="${e.code} - ${e.name}">`;
             });
-            document.getElementById('eq-code').innerHTML = eqOpts;
+            document.getElementById('eq-code-list').innerHTML = eqOpts;
         }
 
         function switchTab(tabId) {
@@ -321,7 +370,6 @@
             const list = document.getElementById('inventory-list');
             list.innerHTML = '';
 
-            // Get Technician's assigned lab from the ROLE column
             let assignedLab = null;
             if (appState.user.role.includes('Technician')) {
                 const match = appState.user.role.match(/\d+/);
@@ -331,8 +379,6 @@
             const grouped = {};
             appState.inventory.forEach(item => {
                 if(!item.code) return;
-                
-                // RESTRICTION: Only process items in their specific lab
                 if (assignedLab && item.location !== assignedLab) return;
 
                 if(!grouped[item.code]) { grouped[item.code] = { code: item.code, name: item.name, danger: item.danger, unit: item.unit, total: 0, batches: [] }; }
@@ -469,7 +515,6 @@
             document.getElementById('log-form').reset();
             setLogType(appState.currentLogType);
             
-            // Pre-select assigned lab for Technicians based on ROLE
             if (appState.user.role.includes('Technician')) {
                 const match = appState.user.role.match(/\d+/);
                 if (match) {
@@ -484,9 +529,11 @@
         function prefillItemForm(code, lab, clo, shl, exp) {
             closeModal('profile-modal');
             document.getElementById('log-form').reset(); 
-            
             setLogType('Item');
-            document.getElementById('item-code').value = code;
+            
+            // Format Datalist pre-fill nicely
+            const catItem = appState.catalogItems.find(i => i.code === code);
+            document.getElementById('item-code').value = catItem ? `${code} - ${catItem.name}` : code;
             
             if (lab && clo && shl) {
                 document.getElementById('item-action').value = "Consume"; 
@@ -498,27 +545,26 @@
             } else {
                 document.getElementById('item-action').value = "Initial Stock";
                 handleActionLogic();
-                // Pre-select Dest Lab for techs based on ROLE
                 if (appState.user.role.includes('Technician')) {
                     const match = appState.user.role.match(/\d+/);
                     if (match) document.getElementById('d-lab').value = "Lab " + match[0];
                 }
             }
-            
             document.getElementById('log-modal').classList.remove('hidden');
         }
 
         function prefillEqForm(code, lab) {
             closeModal('profile-modal');
             document.getElementById('log-form').reset(); 
-            
             setLogType('Equipment');
-            document.getElementById('eq-code').value = code;
-            document.getElementById('eq-action').value = "Status Update";
             
+            // Format Datalist pre-fill nicely
+            const catEq = appState.catalogEq.find(e => e.code === code);
+            document.getElementById('eq-code').value = catEq ? `${code} - ${catEq.name}` : code;
+            
+            document.getElementById('eq-action').value = "Status Update";
             handleActionLogic(); 
             document.getElementById('eq-lab').value = lab;
-            
             document.getElementById('log-modal').classList.remove('hidden');
         }
 
@@ -588,7 +634,6 @@
         async function submitLog(e) {
             e.preventDefault();
 
-            // ROLE VALIDATION RULES (Using ROLE column)
             if (appState.user.role.includes('Technician') && appState.currentLogType === 'Item') {
                 const match = appState.user.role.match(/\d+/);
                 const assignedLab = match ? "Lab " + match[0] : null;
@@ -610,11 +655,18 @@
                 }
             }
 
+            // Extract exact code from the Datalist string (e.g. "SOL-001 - Ethanol 95%" -> "SOL-001")
+            const rawItemCode = document.getElementById('item-code').value;
+            const itemCodeClean = rawItemCode.split('-')[0].trim().toUpperCase();
+
+            const rawEqCode = document.getElementById('eq-code').value;
+            const eqCodeClean = rawEqCode.split('-')[0].trim().toUpperCase();
+
             let payload = {};
             if(appState.currentLogType === 'Item') {
                 payload = {
                     category: "Item", action: document.getElementById('item-action').value,
-                    code: document.getElementById('item-code').value.toUpperCase(),
+                    code: itemCodeClean,
                     amount: document.getElementById('item-amount').value, unit: document.getElementById('item-unit').value,
                     sourceLab: document.getElementById('s-lab').value, sourceCloset: document.getElementById('s-clo').value, sourceShelf: document.getElementById('s-shl').value,
                     destLab: document.getElementById('d-lab').value, destCloset: document.getElementById('d-clo').value, destShelf: document.getElementById('d-shl').value,
@@ -623,7 +675,7 @@
             } else {
                 payload = {
                     category: "Equipment", action: document.getElementById('eq-action').value,
-                    code: document.getElementById('eq-code').value.toUpperCase(), destLoc: document.getElementById('eq-lab').value,
+                    code: eqCodeClean, destLoc: document.getElementById('eq-lab').value,
                     eqStatus: document.getElementById('eq-status').value, nextMaint: document.getElementById('eq-maint').value,
                     techName: appState.user.name, notes: ""
                 };
